@@ -180,10 +180,10 @@ def check_table_existence(senha_empresa, username, dia, mes, ano, volume):
                 else:
                     return f"A tabela '{empresa}' não existe."
             else:
-            # Senha da empresa não encontrada, mostrar botão "Criar conta"
-            if st.button("Criar conta"):
-                st.markdown("[Criar conta](https://seulixo.streamlit.app/)")
-            return "Senha da empresa não encontrada."
+                # Senha da empresa não encontrada, mostrar botão "Criar conta"
+                if st.button("Criar conta"):
+                    st.markdown("[Criar conta](https://seulixo.streamlit.app/)")
+                return "Senha da empresa não encontrada."
     except psycopg2.Error as e:
         return f"Erro ao conectar ao banco de dados: {e}"
 
