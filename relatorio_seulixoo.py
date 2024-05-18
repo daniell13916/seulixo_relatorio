@@ -496,7 +496,7 @@ def generate_report(senha_empresa, data_inicio, data_fim):
             else:
                 st.error("Senha da empresa não encontrada.")
     except TypeError:
-        st.error("Dados do gráfico ausentes ou inválidos.")
+        st.error("Dados sobre as proporções de resíduos auxentes. Peça para o moderador fazer uma avaliação ou inserir os dados após a análise.")
     except psycopg2.Error as e:
         st.error(f"Erro ao conectar no banco de dados.")
 
