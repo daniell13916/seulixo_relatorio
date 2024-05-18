@@ -402,45 +402,57 @@ def generate_report(senha_empresa, data_inicio, data_fim):
             porcentagem_rejeitos = cur.fetchone()
 
             if porcentagem_rejeitos is not None:
-                porcentagem_rejeitos = float(porcentagem_rejeitos[0])  # Converter para float
+                 try:
+                    # Consulta SQL para obter a porcentagem de rejeitos com base na senha fornecida
+                    cur.execute("""
+                        SELECT porcentagem_rejeitos
+                        FROM users
+                        WHERE password = %s;
+                    """, (senha_empresa,))
+                    porcentagem_rejeitos = cur.fetchone()
+                
+                    if porcentagem_rejeitos is not None:
+                        porcentagem_rejeitos = float(porcentagem_rejeitos[0])  # Converter para float
+                
+                        # Consulta SQL para obter os dados de coleta da empresa no período especificado
+                        cur.execute(f"""
+                            SELECT data, volume
+                            FROM "Dados de coleta".{empresa}
+                            WHERE data >= %s AND data <= %s;
+                        """, (data_inicio, data_fim))
+                        coleta_data = cur.fetchall()
 
-                # Consulta SQL para obter os dados de coleta da empresa no período especificado
-                cur.execute(f"""
-                    SELECT data, volume
-                    FROM "Dados de coleta".{empresa}
-                    WHERE data >= %s AND data <= %s;
-                """, (data_inicio, data_fim))
-                coleta_data = cur.fetchall()
-
-                if coleta_data:
-                    # Cálculo do total de coletas e volume coletado
-                    total_coletas = len(coleta_data)
-                    total_volume_coletado = sum(float(row[1]) for row in coleta_data)  # Convertendo para float
-                    perda_rejeito = total_volume_coletado * (porcentagem_rejeitos / 100)
-                    volume_destinado_corretamente = total_volume_coletado - perda_rejeito
-
-                    # Formatação da data do relatório
-                    data_relatorio = time.strftime("%d de %B de %Y")
-                    
-                    # Formatação das datas de início e fim
-                    data_inicio_formatada = data_inicio.strftime("%d/%m/%Y")
-                    data_fim_formatada = data_fim.strftime("%d/%m/%Y")
-                    
-                    # Escrita do relatório
-                    st.markdown("<h1 style='color: #38b6ff;'>Relatório de Coleta</h1>", unsafe_allow_html=True)
-                    st.write("Plano de Gerenciamento de Resíduos Sólidos (PGRS)")
-                    st.write(f"Uberlândia, {data_relatorio}")
-                    st.write(f"No período entre {data_inicio_formatada} a {data_fim_formatada} foram feitas {total_coletas} coletas, totalizando cerca de {round(total_volume_coletado, 2)} kg coletados.")
-                    st.write(f"Foi considerada uma perda de {porcentagem_rejeitos}% de rejeito ou materiais não recicláveis nos recipientes de coleta.")
-                    st.write(f"Ao final do período conseguimos destinar corretamente {round(volume_destinado_corretamente, 2)} kg, reinserindo-os na economia circular, através da reciclagem e da compostagem.")
-                    st.markdown("<h2 style='color: #38b6ff;'>Análise Gravimétrica</h2>", unsafe_allow_html=True)
-                    st.write("Porcentagem de cada tipo de material em relação ao peso total")
-
-                    # Chamar a função para buscar os valores das colunas e criar o gráfico
-                    buscar_valores_e_criar_grafico(senha_empresa)
-
-                    # Calcular economias com base nas proporções
-                    proporcoes = solicitar_proporcoes(senha_empresa)
+                    if coleta_data:
+                        # Cálculo do total de coletas e volume coletado
+                        total_coletas = len(coleta_data)
+                        total_volume_coletado = sum(float(row[1]) for row in coleta_data)  # Convertendo para float
+                        perda_rejeito = total_volume_coletado * (porcentagem_rejeitos / 100)
+                        volume_destinado_corretamente = total_volume_coletado - perda_rejeito
+    
+                        # Formatação da data do relatório
+                        data_relatorio = time.strftime("%d de %B de %Y")
+                        
+                        # Formatação das datas de início e fim
+                        data_inicio_formatada = data_inicio.strftime("%d/%m/%Y")
+                        data_fim_formatada = data_fim.strftime("%d/%m/%Y")
+                        
+                        # Escrita do relatório
+                        st.markdown("<h1 style='color: #38b6ff;'>Relatório de Coleta</h1>", unsafe_allow_html=True)
+                        st.write("Plano de Gerenciamento de Resíduos Sólidos (PGRS)")
+                        st.write(f"Uberlândia, {data_relatorio}")
+                        st.write(f"No período entre {data_inicio_formatada} a {data_fim_formatada} foram feitas {total_coletas} coletas, totalizando cerca de {round(total_volume_coletado, 2)} kg coletados.")
+                        st.write(f"Foi considerada uma perda de {porcentagem_rejeitos}% de rejeito ou materiais não recicláveis nos recipientes de coleta.")
+                        st.write(f"Ao final do período conseguimos destinar corretamente {round(volume_destinado_corretamente, 2)} kg, reinserindo-os na economia circular, através da reciclagem e da compostagem.")
+                        st.markdown("<h2 style='color: #38b6ff;'>Análise Gravimétrica</h2>", unsafe_allow_html=True)
+                        st.write("Porcentagem de cada tipo de material em relação ao peso total")
+    
+                        # Chamar a função para buscar os valores das colunas e criar o gráfico
+                        buscar_valores_e_criar_grafico(senha_empresa)
+    
+                        # Calcular economias com base nas proporções
+                        proporcoes = solicitar_proporcoes(senha_empresa)
+                except psycopg2.Error as e:
+                    return f"Ainda não avaliamos o percentual de resíduos que há na sua empresa. Por favor espere ou peça ao moderador que faça uma avaliação!!"
                     if proporcoes:
                         resultado = calcular_economias(*proporcoes, volume_destinado_corretamente)
 
