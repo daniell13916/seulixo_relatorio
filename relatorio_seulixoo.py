@@ -393,13 +393,16 @@ def generate_report(senha_empresa, data_inicio, data_fim):
             user_id, empresa = empresa_info  # Definindo a variável empresa aqui
             
             # Consulta SQL para obter a porcentagem de rejeitos com base na senha fornecida
-            cur.execute("""
-                SELECT porcentagem_rejeitos
-                FROM users
-                WHERE password = %s;
-            """, (senha_empresa,))
-            porcentagem_rejeitos = cur.fetchone()
-
+            try:
+                cur.execute("""
+                    SELECT porcentagem_rejeitos
+                    FROM users
+                    WHERE password = %s;
+                """, (senha_empresa,))
+                porcentagem_rejeitos = cur.fetchone()
+            except psycopg2.Error as e:
+                return "Ainda não avaliamos o percentual de resíduos que há na sua empresa. Por favor espere ou peça ao moderador que faça uma avaliação!!"
+                
             if porcentagem_rejeitos is not None:
                 porcentagem_rejeitos = float(porcentagem_rejeitos[0])  # Converter para float
 
@@ -412,6 +415,12 @@ def generate_report(senha_empresa, data_inicio, data_fim):
                 coleta_data = cur.fetchall()
 
                 if coleta_data:
+                    # Cálculo do total de coletas e volume coletado
+                    total_coletas = len(coleta_data)
+                    total_volume_coletado = sum(float(row[1]) for row in coleta_data)  # Convertendo para float
+                    perda_rejeito = total_volume_coletado * (porcentagem_rejeitos / 100)
+                    volume_destinado_corretamente = total_volume_coletado - perda_rejeito
+
                     # Restante do código para gerar o relatório...
                 else:
                     st.error("Não há dados de coleta para o período especificado.")
@@ -419,6 +428,7 @@ def generate_report(senha_empresa, data_inicio, data_fim):
                 st.error("Ainda não avaliamos o percentual de resíduos que há na sua empresa. Por favor espere ou peça ao moderador que faça uma avaliação!!")
         else:
             st.error("Senha da empresa não encontrada.")
+
 
 
 # Função para exibir o formulário de coleta
