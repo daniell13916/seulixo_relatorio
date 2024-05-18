@@ -498,7 +498,7 @@ def generate_report(senha_empresa, data_inicio, data_fim):
     except TypeError:
         st.error("Dados do gráfico ausentes ou inválidos.")
     except psycopg2.Error as e:
-        st.error(f"Erro ao conectar
+        st.error(f"Erro ao conectar no banco de dados.")
 
 
 # Função para exibir o formulário de coleta
