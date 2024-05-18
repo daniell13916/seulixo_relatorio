@@ -131,63 +131,6 @@ def check_user(username_or_email, password):
 
 #<a href="https://im.ge/i/conhinhoes1-1.Ko25Ep"><img src="https://i.im.ge/2024/05/17/Ko25Ep.conhinhoes1-1.md.png" alt="conhinhoes1 1" border="0"></a>
 
-# Adiciona o estilo CSS para as divs das imagens de fundo e para o contêiner
-st.markdown(
-    """
-    <style>
-    .container {
-        text-align: center;
-        background-color: white; /* Adiciona um fundo branco ao contêiner */
-        padding: 20px; /* Adiciona um espaçamento interno para evitar que a imagem toque nas bordas */
-        margin-bottom: 20px; /* Espaçamento entre as imagens */
-    }
-    .background-image {
-        background-position: center;
-        background-repeat: no-repeat;
-        height: 0;
-        padding-top: 56.25%; /* Proporção de 16:9 (9 dividido por 16 = 0.5625 ou 56.25%) */
-        display: inline-block;
-    }
-    .background-image-1 {
-        background-image: url('https://i.im.ge/2024/05/06/ZRUJ9S.WhatsApp-Image-2024-05-05-at-5-41-21-PM-Photoroom-png-Photoroom.md.png');
-        width: 100%; /* Largura padrão para a primeira imagem */
-    }
-    .background-image-2 {
-        background-image: url('https://github.com/daniell13916/seulixo/blob/main/imagens/conhinhoes1_(2)-transformed.png?raw=true');
-        background-size: contain; /* Mantém a proporção da imagem sem cortar */
-        width: 100%; /* Largura de 100% para ocupar todo o contêiner */
-        height: 0;
-        padding-top: 56.25%; /* Proporção de 16:9 para a imagem */
-    }
-
-    /* Media query para telas menores */
-    @media (max-width: 768px) {
-        .background-image {
-            width: 100%; /* Ajuste conforme necessário para telas menores */
-        }
-    }
-    /* Media query para telas menores que 640px */
-    @media (max-width: 640px) {
-        .background-image {
-            width: 100%; /* Ajuste conforme necessário para telas menores */
-        }
-    }
-    /* Media query para telas muito pequenas */
-    @media (max-width: 480px) {
-        .background-image {
-            width: 100%; /* Ajuste conforme necessário para telas muito pequenas */
-        }
-    }
-    </style>
-    """
-    , unsafe_allow_html=True
-)
-
-# Adiciona as divs das imagens de fundo dentro de contêineres centralizados
-st.markdown("<div class='container'><div class='background-image background-image-1'></div></div>", unsafe_allow_html=True)
-st.markdown("<div class='container'><div class='background-image background-image-2'></div></div>", unsafe_allow_html=True)
-
-
 def home():
     st.write(" ")
 
