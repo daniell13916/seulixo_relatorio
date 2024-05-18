@@ -469,8 +469,7 @@ def generate_report(senha_empresa, data_inicio, data_fim):
                                     # Adicionar emoji correspondente à economia
                                     emoji = emojis.get(chave, "")
                                     # Criar a moldura com o emoji e o valor
-                                    st.markdown(f"<div style='border: 1px solid black; padding: 20px; text-align: center; color: #38b6ff;'>{emoji} {chave}: {valor}<
-/div>", unsafe_allow_html=True)
+                                    st.markdown(f"<div style='border: 1px solid black; padding: 20px; text-align: center; color: #38b6ff;'>{emoji} {chave}: {valor}</div>", unsafe_allow_html=True)
                                 else:
                                     # Criar uma moldura vazia
                                     st.markdown("<div style='border: 1px solid black; padding: 20px;'></div>", unsafe_allow_html=True)
