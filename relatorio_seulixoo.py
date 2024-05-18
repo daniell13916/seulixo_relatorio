@@ -494,10 +494,13 @@ def generate_report(senha_empresa, data_inicio, data_fim):
         
                     else:
                         st.error("Não há dados de coleta para o período especificado.")
+                else:
+                    st.error("Não há dados de coleta para o período especificado.")
             else:
                 st.error("Ainda não avaliamos o percentual de resíduos que há na sua empresa. Por favor espere ou peça ao moderador que faça uma avaliação!!")
         else:
             st.error("Senha da empresa não encontrada.")
+
 
 # Função para exibir o formulário de coleta
 def collection_form():
