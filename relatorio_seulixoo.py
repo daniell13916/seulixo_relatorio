@@ -14,20 +14,7 @@ conn = psycopg2.connect(
     user="postgres",
     password="postgres"
 )
-# Adiciona a imagem de plano de fundo e o estilo para ocupar toda a tela
-st.markdown(
-    f"""
-    <style>
-    .stApp {{
-        background: url("https://lh3.googleusercontent.com/pw/AP1GczMmpHRnbB_1-qEmLsLsuMQgL7-D3V91nrCKM_WlU4cA4yrPKO2vP8Pj3I_MssP3dlsv7HSLLwDh73kltLTLRm7aX3B5DALLaFlMNMXoCjPa8jhLFWw1vUfJcxqKCo5DK7gawaB45eueEkyEVUmizvVn=w1366-h768-s-no-gm?authuser=0");
-        background-size: cover;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+
 def create_user_table():
     try:
         with conn:
@@ -556,31 +543,30 @@ def generate_report(senha_empresa, data_inicio, data_fim):
 
 # Função para exibir o formulário de coleta
 def collection_form():
-    with tab3:
-        st.markdown("<h1 style='color: #38b6ff;'>Relatório de Coleta</h1>", unsafe_allow_html=True)
-        with st.form("registro_coleta_form"):
-            st.write("Plano de Gerenciamento de Resíduos Sólidos (PGRS)")
-            username = st.text_input("Nome do Coletor")
-            dia = st.number_input("Dia", min_value=1, max_value=31)
-            mes = st.number_input("Mês", min_value=1, max_value=12)
-            ano = st.number_input("Ano", min_value=2024)
-            volume = st.number_input("Volume Coletado", min_value=0.01)
-            senha_empresa = st.text_input("Senha da Empresa", type="password")
+    st.markdown("<h1 style='color: #38b6ff;'>Relatório de Coleta</h1>", unsafe_allow_html=True)
+    with st.form("registro_coleta_form"):
+        st.write("Plano de Gerenciamento de Resíduos Sólidos (PGRS)")
+        username = st.text_input("Nome do Coletor")
+        dia = st.number_input("Dia", min_value=1, max_value=31)
+        mes = st.number_input("Mês", min_value=1, max_value=12)
+        ano = st.number_input("Ano", min_value=2024)
+        volume = st.number_input("Volume Coletado", min_value=0.01)
+        senha_empresa = st.text_input("Senha da Empresa", type="password")
 
-            submit_button_cadastro = st.form_submit_button("Registrar Coleta")
-            if submit_button_cadastro:
-                result_message = check_table_existence(senha_empresa, username, dia, mes, ano, volume)
-                st.write(result_message)
+        submit_button_cadastro = st.form_submit_button("Registrar Coleta")
+        if submit_button_cadastro:
+            result_message = check_table_existence(senha_empresa, username, dia, mes, ano, volume)
+            st.write(result_message)
 
-        with st.form("gerar_relatorio_form"):
-            st.markdown("<h1 style='color: #38b6ff;'>Gerar Relatório</h1>", unsafe_allow_html=True)
-            data_inicio = st.date_input("Data de Início")
-            data_fim = st.date_input("Data Final")
-            senha_relatorio = st.text_input("Senha da Empresa para Relatório", type="password")
-            submit_button_relatorio = st.form_submit_button("Gerar Relatório")
-            
-            if submit_button_relatorio:
-                generate_report(senha_relatorio, data_inicio, data_fim)
+    with st.form("gerar_relatorio_form"):
+        st.markdown("<h1 style='color: #38b6ff;'>Gerar Relatório</h1>", unsafe_allow_html=True)
+        data_inicio = st.date_input("Data de Início")
+        data_fim = st.date_input("Data Final")
+        senha_relatorio = st.text_input("Senha da Empresa para Relatório", type="password")
+        submit_button_relatorio = st.form_submit_button("Gerar Relatório")
+        
+        if submit_button_relatorio:
+            generate_report(senha_relatorio, data_inicio, data_fim)
 
 collection_form()
 
