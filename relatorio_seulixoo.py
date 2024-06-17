@@ -374,14 +374,14 @@ def calcular_economias(porcentagem_plastico, porcentagem_vidro, porcentagem_pape
         "Economia de Petróleo (litros)": format(round(economia_petroleo/100, 2), '.2f')
     }
 def generate_report(senha_empresa, data_inicio, data_fim):
-    try:
-        # Conectar ao banco de dados PostgreSQL
-        conn = psycopg2.connect(
-            host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
-            database="postgres",
-            user="postgres",
-            password="postgres"
-        )
+
+# Conectar ao banco de dados PostgreSQL
+conn = psycopg2.connect(
+    host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
+    database="postgres",
+    user="postgres",
+    password="postgres"
+)
 
         # Abrir um cursor para executar consultas SQL
         with conn.cursor() as cur:
