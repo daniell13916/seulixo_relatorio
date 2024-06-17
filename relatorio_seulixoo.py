@@ -238,7 +238,6 @@ def buscar_valores_e_criar_grafico(senha):
         st.pyplot(plt)
 
     except psycopg2.Error as e:
-        st.e
 #verifica os valores das proporções do banco de dados
 def buscar_valores_proporcoes(senha):
     try:
