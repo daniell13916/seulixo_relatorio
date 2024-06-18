@@ -26,7 +26,7 @@ conn = psycopg2.connect(
     host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
     database="postgres",
     user="postgres",
-    password="postgres"
+    password="#SEUlixo321"
 )
 
 def create_user_table():
@@ -195,7 +195,7 @@ def buscar_valores_e_criar_grafico(senha):
             host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
             database="postgres",
             user="postgres",
-            password="postgres"
+            password="#SEUlixo321"
         )
 
         # Criar um cursor para executar consultas
@@ -247,7 +247,7 @@ def buscar_valores_proporcoes(senha):
             host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
             database="postgres",
             user="postgres",
-            password="postgres"
+            password="#SEUlixo321"
         )
 
         # Criar um cursor para executar consultas
@@ -380,7 +380,7 @@ def generate_report(senha_empresa, data_inicio, data_fim):
         host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
         database="postgres",
         user="postgres",
-        password="postgres"
+        password="#SEUlixo321"
     )
     
     # Abrir um cursor para executar consultas SQL
