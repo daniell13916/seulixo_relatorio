@@ -6,7 +6,6 @@ import uuid
 from datetime import datetime
 import matplotlib.pyplot as plt
 import locale
-
 # Adiciona a imagem de plano de fundo e o estilo para ocupar toda a tela
 st.markdown(
     f"""
@@ -27,8 +26,33 @@ conn = psycopg2.connect(
     host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
     database="postgres",
     user="postgres",
-    password="postgres"
+    password="#SEUlixo321"
 )
+
+def create_user_table():
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                # Criar a tabela de usuários dentro do esquema "public"
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS users (
+                        id SERIAL PRIMARY KEY,
+                        username VARCHAR(50) UNIQUE NOT NULL,
+                        email VARCHAR(100) UNIQUE NOT NULL,
+                        password VARCHAR(255) NOT NULL,
+                        função VARCHAR(20) NOT NULL,
+                        empresa VARCHAR(100) DEFAULT NULL,
+                        acesso BOOLEAN DEFAULT FALSE
+                    );
+                """)
+        # Commit a transação após a criação da tabela
+        conn.commit()
+    except psycopg2.Error as e:
+        st.error(f"Erro ao criar tabela de usuários: {e}")
+    finally:
+        if conn:
+            conn.close()
+
 
 #cria a tabela caso tenha novo cadastro e ela não exista
 def create_empresa(nome_empresa):
@@ -54,6 +78,44 @@ def create_empresa(nome_empresa):
                 st.warning(f"A tabela para a empresa '{nome_empresa}' já existe.")
     except psycopg2.Error as e:
         st.error(f"Não foi possível criar a tabela para a empresa '{nome_empresa}': {e}")
+
+#adiciona novo usuário na tabela users, podendo sem empresa ou coletor
+def add_user(username, email, password, função, empresa=None):
+    try:
+        if not email:
+            raise ValueError("Por favor, insira um endereço de e-mail.")
+        if len(username) < 5:
+            raise ValueError("O nome de usuário deve ter no mínimo 5 caracteres.")
+        if len(password) < 5:
+            raise ValueError("A senha deve ter no mínimo 5 caracteres.")
+        if função not in ["Coletor", "Empresa", "Administrador"]:
+            raise ValueError("Função inválida. Escolha entre 'Coletor', 'Empresa' ou 'Administrador'.")
+
+        with conn.cursor() as cur:
+            # Verifica se o nome de usuário ou e-mail já existem na base de dados
+            cur.execute("SELECT * FROM users WHERE username = %s OR email = %s;", (username, email))
+            existing_user = cur.fetchone()
+            if existing_user:
+                raise ValueError("Usuário ou e-mail já cadastrados. Por favor, altere ou utilize os já existentes.")
+            
+            # Convertendo a empresa para minúsculo se não for None
+            empresa_lower = empresa.lower() if empresa else None
+            
+            cur.execute("INSERT INTO users (username, email, password, função, empresa) VALUES (%s, %s, %s, %s, %s);",
+                        (username, email, password, função.capitalize(), empresa_lower))
+            
+            # Verifica se já existe uma tabela com o nome da empresa em "Dados de coleta"
+            if função.lower() == "empresa":
+                cur.execute("SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = 'Dados de coleta' AND table_name = %s);", (empresa_lower,))
+                table_exists = cur.fetchone()[0]
+                if not table_exists:
+                    # Se a tabela não existe, cria ela
+                    create_empresa(empresa_lower)
+        conn.commit()
+    except ValueError as e:
+        st.error(str(e))
+    except Exception as e:
+        st.error("Erro ao cadastrar usuário. Por favor, tente novamente mais tarde.")
 
 #para saber se o usuário ta online ou não
 def on_session_state_changed():
@@ -81,9 +143,47 @@ def check_user(username_or_email, password):
         cur.execute("SELECT * FROM users WHERE username = %s OR email = %s;", (username_or_email, username_or_email))
         return cur.fetchone() is not None
 
+#<a href="https://im.ge/i/conhinhoes1-1.Ko25Ep"><img src="https://i.im.ge/2024/05/17/Ko25Ep.conhinhoes1-1.md.png" alt="conhinhoes1 1" border="0"></a>
 
+def home():
+    st.write(" ")
 
+# Executar o site
+home()
 
+def register():
+      st.write(" ")
+register()
+
+#ve se a tabela já existe e se tiver vai add os dados e se não tiver vai criar tabela com base na função create_empresa
+def check_table_existence(senha_empresa, username, dia, mes, ano, volume):
+    try:
+        # Abrir um cursor para executar consultas SQL
+        with conn.cursor() as cur:
+            # Consulta SQL para verificar se a senha existe na tabela users e obter o ID e a empresa
+            cur.execute("SELECT id, empresa FROM public.users WHERE password = %s;", (senha_empresa,))
+            empresa_info = cur.fetchone()
+            if empresa_info:
+                user_id, empresa = empresa_info
+                
+                # Verificar a existência da tabela
+                cur.execute("SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = 'Dados de coleta' AND table_name = %s);", (empresa,))
+                table_exists = cur.fetchone()[0]
+                if table_exists:
+                    # Insere os dados na tabela existente
+                    cur.execute(f"""
+                        INSERT INTO "Dados de coleta".{empresa} (data, mes, ano, volume, nome_coletor)
+                        VALUES (%s, %s, %s, %s, %s);
+                    """, (f'{ano}-{mes}-{dia}', mes, ano, volume, username))
+                    conn.commit()
+                    return f"Dados inseridos na tabela '{empresa}'."
+                else:
+                    return f"A tabela '{empresa}' não existe."
+            else:
+                # Senha da empresa não encontrada, adicionar link "Criar conta"
+                return "Senha da empresa não encontrada. [Criar conta](https://seulixo.streamlit.app/)"
+    except psycopg2.Error as e:
+        return f"Erro ao conectar ao banco de dados: {e}"
 
 # Função para conectar ao banco de dados PostgreSQL, buscar os valores das colunas para uma linha específica
 # e criar um gráfico de pizza com base nesses valores
@@ -95,7 +195,7 @@ def buscar_valores_e_criar_grafico(senha):
             host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
             database="postgres",
             user="postgres",
-            password="postgres"
+            password="#SEUlixo321"
         )
 
         # Criar um cursor para executar consultas
@@ -138,7 +238,7 @@ def buscar_valores_e_criar_grafico(senha):
         st.pyplot(plt)
 
     except psycopg2.Error as e:
-        st.e
+        st.error("Erro ao Gerar o gráfico!!")
 #verifica os valores das proporções do banco de dados
 def buscar_valores_proporcoes(senha):
     try:
@@ -147,7 +247,7 @@ def buscar_valores_proporcoes(senha):
             host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
             database="postgres",
             user="postgres",
-            password="postgres"
+            password="#SEUlixo321"
         )
 
         # Criar um cursor para executar consultas
@@ -273,131 +373,137 @@ def calcular_economias(porcentagem_plastico, porcentagem_vidro, porcentagem_pape
         "Economia de Árvores (%)": format(round(economia_arvores/100, 2), '.2f'),
         "Economia de Petróleo (litros)": format(round(economia_petroleo/100, 2), '.2f')
     }
-
 # Função para gerar o relatório
 def generate_report(senha_empresa, data_inicio, data_fim):
-    # Conectar ao banco de dados PostgreSQL
-    conn = psycopg2.connect(
-        host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
-        database="postgres",
-        user="postgres",
-        password="postgres"
-    )
-    
-    # Abrir um cursor para executar consultas SQL
-    with conn.cursor() as cur:
-        # Consulta SQL para obter informações da empresa com base na senha fornecida
-        cur.execute("SELECT id, empresa FROM public.users WHERE password = %s;", (senha_empresa,))
-        empresa_info = cur.fetchone()
+    try:
+        # Conectar ao banco de dados PostgreSQL
+        conn = psycopg2.connect(
+            host="seulixo-aws.c7my4s6c6mqm.us-east-1.rds.amazonaws.com",
+            database="postgres",
+            user="postgres",
+            password="#SEUlixo321"
+        )
         
-        if empresa_info:
-            user_id, empresa = empresa_info  # Definindo a variável empresa aqui
+        # Abrir um cursor para executar consultas SQL
+        with conn.cursor() as cur:
+            # Consulta SQL para obter informações da empresa com base na senha fornecida
+            cur.execute("SELECT id, empresa FROM public.users WHERE password = %s;", (senha_empresa,))
+            empresa_info = cur.fetchone()
             
-            # Consulta SQL para obter a porcentagem de rejeitos com base na senha fornecida
-            cur.execute("""
-                SELECT porcentagem_rejeitos
-                FROM users
-                WHERE password = %s;
-            """, (senha_empresa,))
-            porcentagem_rejeitos = cur.fetchone()
-
-            if porcentagem_rejeitos is not None:
-                porcentagem_rejeitos = float(porcentagem_rejeitos[0])  # Converter para float
-
-                # Consulta SQL para obter os dados de coleta da empresa no período especificado
-                cur.execute(f"""
-                    SELECT data, volume
-                    FROM "Dados de coleta".{empresa}
-                    WHERE data >= %s AND data <= %s;
-                """, (data_inicio, data_fim))
-                coleta_data = cur.fetchall()
-
-                if coleta_data:
-                    # Cálculo do total de coletas e volume coletado
-                    total_coletas = len(coleta_data)
-                    total_volume_coletado = sum(float(row[1]) for row in coleta_data)  # Convertendo para float
-                    perda_rejeito = total_volume_coletado * (porcentagem_rejeitos / 100)
-                    volume_destinado_corretamente = total_volume_coletado - perda_rejeito
-
-                    # Formatação da data do relatório
-                    data_relatorio = time.strftime("%d de %B de %Y")
-                    
-                    # Formatação das datas de início e fim
-                    data_inicio_formatada = data_inicio.strftime("%d/%m/%Y")
-                    data_fim_formatada = data_fim.strftime("%d/%m/%Y")
-                    
-                    # Escrita do relatório
-                    st.markdown("<h1 style='color: #38b6ff;'>Relatório de Coleta</h1>", unsafe_allow_html=True)
-                    st.write("Plano de Gerenciamento de Resíduos Sólidos (PGRS)")
-                    st.write(f"Uberlândia, {data_relatorio}")
-                    st.write(f"No período entre {data_inicio_formatada} a {data_fim_formatada} foram feitas {total_coletas} coletas, totalizando cerca de {round(total_volume_coletado, 2)} kg coletados.")
-                    st.write(f"Foi considerada uma perda de {porcentagem_rejeitos}% de rejeito ou materiais não recicláveis nos recipientes de coleta.")
-                    st.write(f"Ao final do período conseguimos destinar corretamente {round(volume_destinado_corretamente, 2)} kg, reinserindo-os na economia circular, através da reciclagem e da compostagem.")
-                    st.markdown("<h2 style='color: #38b6ff;'>Análise Gravimétrica</h2>", unsafe_allow_html=True)
-                    st.write("Porcentagem de cada tipo de material em relação ao peso total")
-
-                    # Chamar a função para buscar os valores das colunas e criar o gráfico
-                    buscar_valores_e_criar_grafico(senha_empresa)
-
-                    # Calcular economias com base nas proporções
-                    proporcoes = solicitar_proporcoes(senha_empresa)
-                    if proporcoes:
-                        resultado = calcular_economias(*proporcoes, volume_destinado_corretamente)
-
-                        # Exibir resultados das economias
-                        st.markdown("<h2 style='color: #38b6ff;'>Ganhos Ambientais</h2>", unsafe_allow_html=True)
-                        st.write("Dados dos ganhos ambientais na preservação do meio ambiente alcançados com a destinação correta dos resíduos recicláveis e orgânicos.")
-
-                        # Dividindo os resultados em uma matriz 3x2
-                        num_rows = 3
-                        num_cols = 2
-                        resultados = list(resultado.items())
-
-                        # Dicionário de emojis correspondentes aos diferentes tipos de economias
-                        emojis = {
-                            "Economia de Energia (kWh)": "💡",
-                            "Economia de Água (litros)": "💧",
-                            "Redução de CO2 (kg)": "🌍",
-                            "Redução de Volume no Aterro (litros)": "♻️",
-                            "Economia de Árvores (%)": "🌳",
-                            "Economia de Petróleo (litros)": "⛽"
-                        }
-
-                        for i in range(num_rows):
-                            for j in range(num_cols):
-                                index = i * num_cols + j
-                                if index < len(resultados):
-                                    chave, valor = resultados[index]
-                                    # Adicionar emoji correspondente à economia
-                                    emoji = emojis.get(chave, "")
-                                    # Criar a moldura com o emoji e o valor
-                                    st.markdown(f"<div style='border: 1px solid black; padding: 20px; text-align: center; color: #38b6ff;'>{emoji} {chave}: {valor}</div>", unsafe_allow_html=True)
-                                else:
-                                    # Criar uma moldura vazia
-                                    st.markdown("<div style='border: 1px solid black; padding: 20px;'></div>", unsafe_allow_html=True)
-
-                        # Colorindo os títulos em azul
-                        st.markdown(
-                            """
-                            <style>
-                            .title-text {
-                                color: #38b6ff;
+            if empresa_info:
+                user_id, empresa = empresa_info  # Definindo a variável empresa aqui
+                
+                # Consulta SQL para obter a porcentagem de rejeitos com base na senha fornecida
+                cur.execute("""
+                    SELECT porcentagem_rejeitos
+                    FROM users
+                    WHERE password = %s;
+                """, (senha_empresa,))
+                porcentagem_rejeitos = cur.fetchone()
+    
+                if porcentagem_rejeitos is not None:
+                    porcentagem_rejeitos = float(porcentagem_rejeitos[0])  # Converter para float
+    
+                    # Consulta SQL para obter os dados de coleta da empresa no período especificado
+                    cur.execute(f"""
+                        SELECT data, volume
+                        FROM "Dados de coleta".{empresa}
+                        WHERE data >= %s AND data <= %s;
+                    """, (data_inicio, data_fim))
+                    coleta_data = cur.fetchall()
+    
+                    if coleta_data:
+                        # Cálculo do total de coletas e volume coletado
+                        total_coletas = len(coleta_data)
+                        total_volume_coletado = sum(float(row[1]) for row in coleta_data)  # Convertendo para float
+                        perda_rejeito = total_volume_coletado * (porcentagem_rejeitos / 100)
+                        volume_destinado_corretamente = total_volume_coletado - perda_rejeito
+    
+                        # Formatação da data do relatório
+                        data_relatorio = time.strftime("%d de %B de %Y")
+                        
+                        # Formatação das datas de início e fim
+                        data_inicio_formatada = data_inicio.strftime("%d/%m/%Y")
+                        data_fim_formatada = data_fim.strftime("%d/%m/%Y")
+                        
+                        # Escrita do relatório
+                        st.markdown("<h1 style='color: #38b6ff;'>Relatório de Coleta</h1>", unsafe_allow_html=True)
+                        st.write("Plano de Gerenciamento de Resíduos Sólidos (PGRS)")
+                        st.write(f"Uberlândia, {data_relatorio}")
+                        st.write(f"No período entre {data_inicio_formatada} a {data_fim_formatada} foram feitas {total_coletas} coletas, totalizando cerca de {round(total_volume_coletado, 2)} kg coletados.")
+                        st.write(f"Foi considerada uma perda de {porcentagem_rejeitos}% de rejeito ou materiais não recicláveis nos recipientes de coleta.")
+                        st.write(f"Ao final do período conseguimos destinar corretamente {round(volume_destinado_corretamente, 2)} kg, reinserindo-os na economia circular, através da reciclagem e da compostagem.")
+                        st.markdown("<h2 style='color: #38b6ff;'>Análise Gravimétrica</h2>", unsafe_allow_html=True)
+                        st.write("Porcentagem de cada tipo de material em relação ao peso total")
+    
+                        # Chamar a função para buscar os valores das colunas e criar o gráfico
+                        buscar_valores_e_criar_grafico(senha_empresa)
+    
+                        # Calcular economias com base nas proporções
+                        proporcoes = solicitar_proporcoes(senha_empresa)
+                        if proporcoes:
+                            resultado = calcular_economias(*proporcoes, volume_destinado_corretamente)
+    
+                            # Exibir resultados das economias
+                            st.markdown("<h2 style='color: #38b6ff;'>Ganhos Ambientais</h2>", unsafe_allow_html=True)
+                            st.write("Dados dos ganhos ambientais na preservação do meio ambiente alcançados com a destinação correta dos resíduos recicláveis e orgânicos.")
+    
+                            # Dividindo os resultados em uma matriz 3x2
+                            num_rows = 3
+                            num_cols = 2
+                            resultados = list(resultado.items())
+    
+                            # Dicionário de emojis correspondentes aos diferentes tipos de economias
+                            emojis = {
+                                "Economia de Energia (kWh)": "💡",
+                                "Economia de Água (litros)": "💧",
+                                "Redução de CO2 (kg)": "🌍",
+                                "Redução de Volume no Aterro (litros)": "♻️",
+                                "Economia de Árvores (%)": "🌳",
+                                "Economia de Petróleo (litros)": "⛽"
                             }
-                            </style>
-                            """, 
-                            unsafe_allow_html=True
-                        )
+    
+                            for i in range(num_rows):
+                                for j in range(num_cols):
+                                    index = i * num_cols + j
+                                    if index < len(resultados):
+                                        chave, valor = resultados[index]
+                                        # Adicionar emoji correspondente à economia
+                                        emoji = emojis.get(chave, "")
+                                        # Criar a moldura com o emoji e o valor
+                                        st.markdown(f"<div style='border: 1px solid black; padding: 20px; text-align: center; color: #38b6ff;'>{emoji} {chave}: {valor}</div>", unsafe_allow_html=True)
+                                    else:
+                                        # Criar uma moldura vazia
+                                        st.markdown("<div style='border: 1px solid black; padding: 20px;'></div>", unsafe_allow_html=True)
+    
+                            # Colorindo os títulos em azul
+                            st.markdown(
+                                """
+                                <style>
+                                .title-text {
+                                    color: #38b6ff;
+                                }
+                                </style>
+                                """, 
+                                unsafe_allow_html=True
+                            )
+    
+                            st.write("Fonte: Cálculos desenvolvidos pelo Cataki em parceria com o Instituto GEA.")
+                            st.markdown("<h2 style='color: #38b6ff;'>Gabriela Brant</h2>", unsafe_allow_html=True)
+                            st.write("Responsável Técnica Seu Lixo LTDA")
+                            st.markdown("<h2 style='color: #38b6ff;'>Alexandre Corrêa</h2>", unsafe_allow_html=True)
+                            st.write("Diretor Seu Lixo LTDA")
+    
+                    else:
+                        st.error("Não há dados de coleta para o período especificado.")
+            else:
+                st.error("Senha da empresa não encontrada.")
+            
+    except TypeError:
+        st.error("Dados sobre as proporções de resíduos ausentes. Peça para o moderador fazer uma avaliação ou inserir os dados após a análise.")
+    except psycopg2.Error as e:
+        st.error(f"Erro ao conectar no banco de dados: {e}")
 
-                        st.write("Fonte: Cálculos desenvolvidos pelo Cataki em parceria com o Instituto GEA.")
-                        st.markdown("<h2 style='color: #38b6ff;'>Gabriela Brant</h2>", unsafe_allow_html=True)
-                        st.write("Responsável Técnica Seu Lixo LTDA")
-                        st.markdown("<h2 style='color: #38b6ff;'>Alexandre Corrêa</h2>", unsafe_allow_html=True)
-                        st.write("Diretor Seu Lixo LTDA")
-
-                else:
-                    st.error("Não há dados de coleta para o período especificado.")
-        else:
-            st.error("Senha da empresa não encontrada.")
 
 # Função para exibir o formulário de coleta
 def collection_form():
@@ -408,7 +514,7 @@ def collection_form():
         dia = st.number_input("Dia", min_value=1, max_value=31)
         mes = st.number_input("Mês", min_value=1, max_value=12)
         ano = st.number_input("Ano", min_value=2024)
-        volume = st.number_input("Volume Coletado", min_value=0.01)
+        volume = st.number_input("Volume Coletado (Kg)", min_value=0.01)
         senha_empresa = st.text_input("Senha da Empresa", type="password")
 
         submit_button_cadastro = st.form_submit_button("Registrar Coleta")
@@ -428,5 +534,10 @@ def collection_form():
 
 collection_form()
 
+# Criar a tabela de usuários se ainda não existir
+create_user_table()
+
+# Executar o site
+home()
 
 
